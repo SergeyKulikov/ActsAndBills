@@ -1,5 +1,11 @@
 package com.mycoloruniverse.actsbills.models;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.mycoloruniverse.actsbills.R;
+
 public interface Settings {
-    int BTN_ACTION_NON = -1;
+    String APP_TAG = Settings.class.getPackage().getName();
+
+
 }

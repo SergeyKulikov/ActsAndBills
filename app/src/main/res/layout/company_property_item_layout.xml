@@ -16,10 +16,10 @@
 
     <EditText
         android:id="@+id/etPropertyValue"
-        style="@style/TextAppearance.AppCompat.Body1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:ems="10"
+        style="@style/EditTextActiveGray"
         android:inputType="textPersonName"
         android:text="Name"
         app:layout_constraintEnd_toStartOf="@+id/btnPropertySelect"
@@ -30,7 +30,7 @@
         android:id="@+id/btnPropertySelect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@android:drawable/stat_notify_chat"
+        android:src="@drawable/ic_dots_2"
         android:text="..."
         app:layout_constraintBottom_toBottomOf="@+id/etPropertyValue"
         app:layout_constraintEnd_toEndOf="parent"
