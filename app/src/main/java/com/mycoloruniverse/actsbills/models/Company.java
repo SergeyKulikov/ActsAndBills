@@ -43,6 +43,11 @@ public class Company {
     @Ignore
     // В качетсве индекса используем буквенный уникальный код
     private final ArrayMap<String, String> propertyMap = new ArrayMap<>();
+    @Ignore
+    private final Map<String, List<CompanyProperty>> companyPropertyMap = new HashMap<>();
+
+    @Ignore
+    private final String[] propertyGroups = {"Основные\nреквизиты", "Банковские счета"};
 
     @Ignore
     // Список расчетных счетов компании (в основном нужен один)
@@ -53,7 +58,45 @@ public class Company {
         this.guid = guid;
         this.default_account = default_account;
         this.name = name;
+
+        try {
+            createDefaultCompanyPropertyList(); // Создаем список без значений
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
+
+    public Map<String, List<CompanyProperty>> getCompanyPropertyMap() {
+        return companyPropertyMap;
+    }
+
+    private void createDefaultCompanyPropertyList() throws JSONException {
+
+        List<CompanyProperty> propertyItemList = new ArrayList<>();
+        propertyItemList.add(new CompanyProperty("ident", "ИНН", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("kpp", "КПП", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("ogrn", "ОГРН", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("address_manage", "Адрес юридический", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("address_fact", "Адрес почтовый", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("manager_position", "Должность управляющего", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("manager_name", "Ф.И.О. управляющего", "", "", "", null, null));
+        propertyItemList.add(new CompanyProperty("chief_accountant", "Ф.И.О. главного бухгалтера", "", "", "", null, null));
+
+        companyPropertyMap.put(propertyGroups[0], propertyItemList);
+        List<CompanyProperty> propertyItemList1 = new ArrayList<>();
+
+        PropertyButton bikButton = new PropertyButton("bik_catalog", EPropertyButton.BikBank, 0); // Содали на кноке справочник BIK
+        // По логике нужно передать туда сам справочник
+
+        propertyItemList1.add(new CompanyProperty("bank_bik", "БИК банка", "", "", "", bikButton, null));
+        propertyItemList1.add(new CompanyProperty("bank_name", "Название банка", "", "", "", null, null));
+        propertyItemList1.add(new CompanyProperty("bank_account", "Корреспондетский счет банка", "", "", "", null, null));
+        propertyItemList1.add(new CompanyProperty("account", "Расчетный счет организации", "", "", "", null, null));
+        companyPropertyMap.put(propertyGroups[1], propertyItemList1);
+
+        // showCatalogByButton();
+    }
+
 
     public void setPropertyMap (List<CompanyProperty> companyPropertyList) {
         // propertyMap.clear();
@@ -79,7 +122,7 @@ public class Company {
     }
 
     public ArrayMap<String, String> getPropertyMap() {
-        return propertyMap;
+        return   propertyMap;
     }
 
     public ArrayMap<String, CompanyBankAccount> getBankAccountMap() {

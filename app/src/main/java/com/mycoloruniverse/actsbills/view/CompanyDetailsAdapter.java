@@ -61,7 +61,7 @@ public class CompanyDetailsAdapter extends RecyclerView.Adapter<CompanyDetailsAd
         return 0;
     }
 
-    public void setCompanyPropertyList(Map<String, List<CompanyProperty>> companyPropertyList) {
+    public void setCompanyPropertyMap(Map<String, List<CompanyProperty>> companyPropertyList) {
         if (companyPropertyList != null) {
             this.companyPropertyList.clear();
             this.companyPropertyList.putAll(companyPropertyList);

@@ -1,5 +1,6 @@
 package com.mycoloruniverse.actsbills;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -10,18 +11,22 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mycoloruniverse.actsbills.models.Company;
+import com.mycoloruniverse.actsbills.models.Settings;
 import com.mycoloruniverse.actsbills.view.CompanyAdapter;
+import com.mycoloruniverse.actsbills.view.CompanyDetails;
 
 import java.util.UUID;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Action;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 import static com.mycoloruniverse.actsbills.models.Settings.APP_TAG;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Settings {
     private final AppDao appDao = App.getInstance().getAppDatabase().getDaoDatabase();
+    private Disposable disposableLoadCompanyList;
+    private Disposable disposableSaveCompany;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         rvCompany.setOnCreateContextMenuListener(this); // необходимо для контекстного меню для RecycledView
         rvCompany.addItemDecoration(dividerItemDecoration);
 
-        appDao.rx_loadCompanyList()
+        disposableLoadCompanyList = appDao.rx_loadCompanyList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(companies -> {
@@ -56,17 +61,38 @@ public class MainActivity extends AppCompatActivity {
                         () -> Log.d(APP_TAG, "com")
                 );
 
+
+        // startActivity(new Intent(this, CompanyDetails.class));
+
+        Company currentCompany = new Company(
+                UUID.randomUUID().toString(), "", null
+        );
+
         fab.setOnClickListener(view -> {
-            appDao.rx_saveCompany(
-                    new Company(UUID.randomUUID().toString(), "", null)
+            Intent intent = new Intent(this, CompanyDetails.class);
+            intent.putExtra(APP_ACTION, ID_ACTION_NEW_COMPANY);
+            startActivity(intent);
+
+            /*
+            disposableSaveCompany = appDao.rx_saveCompany(
+                    // currentCompany
+
             ).subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(id -> {
                         Log.d(APP_TAG, id.toString());
                     });
+
+             */
         });
 
         // startActivity(new Intent(this, CompanyDetails.class));
     }
 
+    @Override
+    protected void onDestroy() {
+        disposableLoadCompanyList.dispose();
+        disposableSaveCompany.dispose();
+        super.onDestroy();
+    }
 }

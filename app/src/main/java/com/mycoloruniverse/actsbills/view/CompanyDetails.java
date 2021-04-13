@@ -2,8 +2,10 @@ package com.mycoloruniverse.actsbills.view;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TabHost;
@@ -42,9 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
+
 public class CompanyDetails extends AppCompatActivity implements Settings, ICompanyDetails {
     private final Map<String, List<CompanyProperty>> companyPropertyList = new HashMap<>();
-    private final CompanyDetailsAdapter companyPropertyAdapter = new CompanyDetailsAdapter(R.layout.company_property_item_layout);
+    private final CompanyDetailsAdapter companyPropertyAdapter = new CompanyDetailsAdapter(
+            R.layout.company_property_item_layout);
 
     private RecyclerView rvCompanyProperty;
     private CompanyDetailsPresenter presenter;
@@ -52,6 +58,10 @@ public class CompanyDetails extends AppCompatActivity implements Settings, IComp
 
     private final AppDao appDao = App.getInstance().getAppDatabase().getDaoDatabase();
     private TextView tvData;
+    private Company currentCompany;
+
+    private TextView tvCaption;
+    private EditText etName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)  {
@@ -60,17 +70,51 @@ public class CompanyDetails extends AppCompatActivity implements Settings, IComp
 
         presenter = new CompanyDetailsPresenter(this);
 
+        tvCaption = findViewById(R.id.tvPropertyName);
+        tvCaption.setText("Название");
+
+        etName = findViewById(R.id.etPropertyValue);
+
+
+        Intent intent = getIntent();
+        if (intent.hasExtra(APP_ACTION)) {
+            switch (intent.getIntExtra(APP_ACTION, 0)) {
+                case ID_ACTION_NEW_COMPANY:
+                    currentCompany = new Company(
+                            UUID.randomUUID().toString(), "", null
+                    );
+                    break;
+                case ID_ACTION_EDIT_COMPANY:
+                    appDao.rx_loadCompanyByGUID(intent.getStringExtra(COMPANY_ID))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(company -> {
+                                currentCompany = company;
+                                etName.setText(currentCompany.getName());
+
+                                // companyPropertyList = currentCompany.get
+
+                                // currentCompany.getPropertyValue("ident");
+                            });
+                    break;
+                default:
+                    Log.d(APP_TAG, "Unknown app action ID");
+            }
+        }
+
+
+
+        /*
         try {
             createDefaultCompanyPropertyList(); // Создаем список без значений
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+         */
+
         createTabs();
 
-        TextView tvCaption = findViewById(R.id.tvPropertyName);
-        EditText etName = findViewById(R.id.etPropertyValue);
-
-        tvCaption.setText("Название");
 
 
         rvCompanyProperty = findViewById(R.id.rvCompanyProperty);
@@ -85,10 +129,11 @@ public class CompanyDetails extends AppCompatActivity implements Settings, IComp
         rvCompanyProperty.addItemDecoration(dividerItemDecoration);
 
         companyPropertyAdapter.setActiveFolder(propertyGroups[0]);
-        companyPropertyAdapter.setCompanyPropertyList(companyPropertyList);
+        companyPropertyAdapter.setCompanyPropertyMap(currentCompany.getCompanyPropertyMap());
+        // companyPropertyAdapter.setCompanyPropertyList(currentCompany.);
 
-        Company company = new Company(UUID.randomUUID().toString(), "ООО \"Хомяки\"", null);
-        company.setPropertyMap(companyPropertyAdapter.getCompanyPropertyList().get(propertyGroups[0]));
+        // Company company = new Company(UUID.randomUUID().toString(), "ООО \"Хомяки\"", null);
+        // currentCompany.setPropertyMap(companyPropertyAdapter.getCompanyPropertyList().get(propertyGroups[0]));
 
         /*
             Звук при нажатии
@@ -104,34 +149,7 @@ public class CompanyDetails extends AppCompatActivity implements Settings, IComp
             companyPropertyAdapter.getCompanyPropertyList().observe(this, Observer { newValue ->  // код }
         */
         tvData = findViewById(R.id.tvData);
-        Log.d("TAG", company.getProperty_list());
-    }
-
-    private void createDefaultCompanyPropertyList() throws JSONException {
-
-        List<CompanyProperty> propertyItemList = new ArrayList<>();
-        propertyItemList.add(new CompanyProperty("ident", "ИНН", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("kpp", "КПП", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("ogrn", "ОГРН", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("address_manage", "Адрес юридический", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("address_fact", "Адрес почтовый", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("manager_position", "Должность управляющего", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("manager_name", "Ф.И.О. управляющего", "", "", "", null, null));
-        propertyItemList.add(new CompanyProperty("chief_accountant", "Ф.И.О. главного бухгалтера", "", "", "", null, null));
-
-        companyPropertyList.put(propertyGroups[0], propertyItemList);
-        List<CompanyProperty> propertyItemList1 = new ArrayList<>();
-
-        PropertyButton bikButton = new PropertyButton("bik_catalog", EPropertyButton.BikBank, 0); // Содали на кноке справочник BIK
-        // По логике нужно передать туда сам справочник
-
-        propertyItemList1.add(new CompanyProperty("bank_bik", "БИК банка", "", "", "", bikButton, null));
-        propertyItemList1.add(new CompanyProperty("bank_name", "Название банка", "", "", "", null, null));
-        propertyItemList1.add(new CompanyProperty("bank_account", "Корреспондетский счет банка", "", "", "", null, null));
-        propertyItemList1.add(new CompanyProperty("account", "Расчетный счет организации", "", "", "", null, null));
-        companyPropertyList.put(propertyGroups[1], propertyItemList1);
-
-        // showCatalogByButton();
+        Log.d("TAG", currentCompany.getProperty_list());
     }
 
     private void showCatalogByButton() throws JSONException {
@@ -235,4 +253,13 @@ public class CompanyDetails extends AppCompatActivity implements Settings, IComp
     public void onPointerCaptureChanged(boolean hasCapture) {
         Log.d(APP_TAG, "Has Capture: " + hasCapture);
     }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
 }

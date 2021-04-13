@@ -27,4 +27,6 @@ public interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Maybe<Long> rx_saveCompany(Company company);
 
+    @Query("SELECT * FROM Company WHERE guid = :guid")
+    Maybe<Company> rx_loadCompanyByGUID(String guid);
 }
